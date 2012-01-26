@@ -1,0 +1,53 @@
+                       SAGA X.509 Context Adaptor
+
+The X.509 adaptor implements the SAGA context API for X.509 certificates. It 
+is required by several other adaptors, including the Globus adaptors and the 
+gLite adaptors. 
+           
+* Latest version: 
+  http://www.saga-project.org/download/adaptors/x509/
+
+* Usage examples: 
+  http://saga-project.org/documentation/tutorials/x509-adaptor
+  
+For detailed informations on how to install SAGA, please refer 
+to the documentation section on our website:
+
+  http://saga-project.org/documentation/ 
+
+
+  PREREQUISISTES:
+  
+  o SAGA Core Components
+    You have to install the SAGA Core Components before you can install the
+    Python Bindings. The Core Components are available on the SAGA website.
+
+  o Boost C++ Libraries >= 1.33
+    You need to have the Boost C++ libraries installed on your system. Many
+    systems already provide binary packages for them. If your system doesn't 
+    you can download the source from http://www.boost.org and build it yourself.
+    
+ 
+  BUILDING AND INSTALLING THE X.509 ADAPTOR
+ 
+  The X.509 Adaptor comes with a configure/make-based buildsystem. 
+  For a complete list of configure options, you can typ
+
+    ./configure --help
+ 
+
+  To configure, build and install the X509 Adaptor, make sure that 
+  $SAGA_LOCATION points to your SAGA Core Components installation and
+  execute ./configure and make:
+
+    $> export SAGA_LOCATION=/PATH/TO/SAGA_CORE_INSTALLATION
+    $> ./configure
+    $> make
+    $> make install
+
+
+
+  Please help us to improve the quality of SAGA and file a bug report if you 
+  have encountered any problems with the build system. Our bug-tracking system 
+  can be found at: http://saga-project.org/developers/bugreporting
+

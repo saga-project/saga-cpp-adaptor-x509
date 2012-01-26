@@ -1,0 +1,22 @@
+
+PACKAGE:  saga-adaptors-x509
+VERSION:  1.1
+REVISION: $Revision: 751 $
+
+DEPENDENCIES:
+  saga-core
+
+DIRS:
+  config/
+  context/
+
+FILES:
+  PACKAGE
+  LICENSE
+  INSTALL
+  CHANGES
+  README
+  Makefile
+  configure
+  configure.in
+

@@ -1,0 +1,16 @@
+                       SAGA X.509 Context Adaptor            
+                        - Release Changelog -
+
+
+  Changes with SAGA X.509 Adaptors Version 1.1                          T.B.D
+  ---------------------------------------------------------------------------
+  o 
+
+  Changes with SAGA X.509 Adaptors Version 1.0             01. September 2011
+  ---------------------------------------------------------------------------
+  o Buildsystem preparation for Debian package generation.
+  o Fixed links in INSTALL/CHANGES files.
+  
+  Changes with SAGA X.509 Context Adaptor Version 0.9.0        18. April 2010
+  ---------------------------------------------------------------------------
+  o Initital release after repository split-up
