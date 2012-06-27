@@ -1,0 +1,14 @@
+                       SAGA X.509 Context Adaptor
+
+The X.509 adaptor implements the SAGA context API for X.509 certificates. It 
+is required by several other adaptors, including the Globus adaptors and the 
+gLite adaptors. 
+           
+* Latest version: 
+  http://www.saga-project.org/download/adaptors/x509/
+
+* Usage examples: 
+  http://saga-project.org/documentation/tutorials/x509-adaptor
+           
+ Please refer to the INSTALL file for more details. 
+ 

@@ -576,6 +576,9 @@ TMP_SAGA_INSTTYPE
 SAGA_LIB_VERSION
 SAGA_MAKE_INCLUDE_DIR
 TMP_SAGA_LOCATION
+SAGA_PACKAGE_REVISION
+SAGA_PACKAGE_VERSION
+SAGA_PACKAGE_NAME
 SAGA_CONFIG
 SAGA_INI_DIR
 SAGA_BIN_DIR
@@ -584,8 +587,6 @@ SAGA_INC_DIR
 SAGA_CONF_DIR
 SAGA_MAKE_DIR
 HAVE_SAGA
-SAGA_PACKAGE_REVISION
-SAGA_PACKAGE_VERSION
 SAGA_VERSION_SUBMINOR
 SAGA_VERSION_MINOR
 SAGA_VERSION_MAJOR
@@ -1787,8 +1788,16 @@ $as_echo "$SAGA_VERSION_MAJOR.$SAGA_VERSION_MINOR.$SAGA_VERSION_SUBMINOR" >&6; }
   fi
 
 
-  # We set SAGA_PACKAGE_VERSION to SAGA_VERSION by default.  If a local PACKAGE file is
-  # present though, for example for an adaptor, we use its version info instead.
+  # We set SAGA_PACKAGE_NAME, SAGA_PACKAGE_VERSION to SAGA_VERSION by default.  If a
+  # local PACKAGE file is present though, for example for an adaptor, we use its
+  # version info instead.
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking saga package name" >&5
+$as_echo_n "checking saga package name... " >&6; }
+  SAGA_PACKAGE_NAME=saga
+  test -f PACKAGE && SAGA_PACKAGE_NAME=` grep -e '^PACKAGE:'  PACKAGE | sed -e 's/^PACKAGE: *//'`
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $SAGA_PACKAGE_NAME" >&5
+$as_echo "$SAGA_PACKAGE_NAME" >&6; }
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking saga package version" >&5
 $as_echo_n "checking saga package version... " >&6; }
@@ -1804,12 +1813,6 @@ $as_echo "$SAGA_PACKAGE_VERSION (r$SAGA_PACKAGE_REVISION)" >&6; }
   if ! test "$svnrevision" = ""; then
     SAGA_PACKAGE_REVISION=$svnrevision
   fi
-
-
-  export  SAGA_PACKAGE_VERSION
-
-  export  SAGA_PACKAGE_REVISION
-
 
 
   # we set SAGA_LOCATION, and a couple of other vars
@@ -1834,6 +1837,12 @@ $as_echo "$SAGA_PACKAGE_VERSION (r$SAGA_PACKAGE_REVISION)" >&6; }
   export SAGA_INI_DIR
   export SAGA_CONFIG
   export SAGA_VERSION
+  export SAGA_PACKAGE_NAME
+  export SAGA_PACKAGE_VERSION
+  export SAGA_PACKAGE_REVISION
+
+
+
 
 
 
@@ -1886,6 +1895,7 @@ SAGA_DEP_FILES="$SAGA_LOCATION/include/saga/saga.hpp"
 # binary package support
 
   depfiles=$SAGA_DEP_FILES
+  depfiles_nv=
 
   # Extract the first word of "dpkg", so it can be a program name with args.
 set dummy dpkg; ac_word=$2
@@ -1999,6 +2009,35 @@ $as_echo "Cannot find debian package version for $depfile" >&6; }
       oldpackage=$package
     done
 
+    for  depfile in $depfiles_nv;
+    do
+
+      depfile=`echo $depfile | sed -e 's|//|/|g'`
+      package=`$SAGA_DPKG -S $depfile 2>>/dev/null | cut -sf 1 -d ':'`
+
+      if test "" = "$package"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: Cannot find debian package for $depfile" >&5
+$as_echo "Cannot find debian package for $depfile" >&6; }
+        continue
+      fi
+
+      # AC_MSG_NOTICE([$depfile: $package])
+
+      if test "$oldpackage" = "$package"; then
+        # avoid repetetetive entries, to some extend
+        continue;
+      fi
+
+      if ! test "$first" == "yes"; then
+        SAGA_DEB_DEPENDENCIES="$SAGA_DEB_DEPENDENCIES, "
+      fi
+
+      SAGA_DEB_DEPENDENCIES="$SAGA_DEB_DEPENDENCIES$package"
+
+      first=no
+      oldpackage=$package
+    done
+
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $SAGA_DEB_DEPENDENCIES" >&5
 $as_echo "$SAGA_DEB_DEPENDENCIES" >&6; }
 
@@ -2057,7 +2096,7 @@ Maintainer:     Andre Merzky [andre--saga@merzky.net]
 Conflicts:
 Replaces:
 Provides:
-Description:    http://www.saga-project.org/
+Description:    http://saga-project.org/
 EOT
     #
     ###########################################################
@@ -2073,6 +2112,7 @@ EOT
 
 
   depfiles=$SAGA_DEP_FILES
+  depfiles_nv=
 
   # Extract the first word of "rpm", so it can be a program name with args.
 set dummy rpm; ac_word=$2
@@ -2199,12 +2239,15 @@ $as_echo "Cannot find redhat package version for $depfile" >&6; }
         continue
       fi
 
-      # this is what, for example, ubuntu 11.x reposrt for the package
+      # this is what, for example, ubuntu 11.x reports for the package
       # openssh-client: 1:5.8p1-1ubuntu3
       # Google tells me that this contains version 5.8.x of the ssh tools,
       # so we strip whatever is before the colon, and hope that scheme is
       # universally valid.  haha.
-      version=`echo $version | sed -e "s/^.*\://g"`
+      #
+      # Oy, we also need to strip the patchlevel info, as some versions
+      # of rpmbuild complain about that when evaluating the control file.
+      version=`echo $version | sed -e "s/^.*\://g" | sed -e "s/p.*//g"`
 
       vmajor=`echo $version | cut -sf 1 -d '.'`
       vminor=`echo $version | cut -sf 2 -d '.'`
@@ -2226,9 +2269,44 @@ $as_echo "Cannot find redhat package version for $depfile" >&6; }
 
       SAGA_RPM_DEPENDENCIES="$SAGA_RPM_DEPENDENCIES$package >= $vmin"
 
-      if ! test "." = `expr substr $vmax 1 1`; then
-        SAGA_RPM_DEPENDENCIES="$SAGA_RPM_DEPENDENCIES, $package < $vmax"
+      # we trust RPM's autoreq utilities to do the right thing, and do not
+      # specify upper version bounds
+      #
+      # if ! test "." = `expr substr $vmax 1 1`; then
+      #   SAGA_RPM_DEPENDENCIES="$SAGA_RPM_DEPENDENCIES, $package < $vmax"
+      # fi
+
+      first=no
+      oldpackage=$package
+    done
+
+    for  depfile in $depfiles_nv;
+    do
+
+      depfile=`echo $depfile | sed -e 's|//|/|g'`
+      package=`$SAGA_RPM -qf $depfile 2>>/dev/null`
+      check=`echo "$package" | grep ' '`
+
+      if test "$check" = "$package"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: Cannot find redhat package for $depfile" >&5
+$as_echo "Cannot find redhat package for $depfile" >&6; }
+        continue
       fi
+
+      package=`rpm -qi $package | grep Name | head -1 | cut -sf 2 -d ':' | cut -sf 2 -d ' '`
+
+      # AC_MSG_NOTICE([$depfile: $package])
+
+      if test "$oldpackage" = "$package"; then
+        # avoid repetetetive entries, to some extend
+        continue;
+      fi
+
+      if ! test "$first" == "yes"; then
+        SAGA_RPM_DEPENDENCIES="$SAGA_RPM_DEPENDENCIES, "
+      fi
+
+      SAGA_RPM_DEPENDENCIES="$SAGA_RPM_DEPENDENCIES$package"
 
       first=no
       oldpackage=$package
@@ -2303,14 +2381,14 @@ $as_echo "creating $SAGA_RPM_CONTROL" >&6; }
 # Header section
 #
 
-Summary:   http://www.saga-project.org/
+Summary:   http://saga-project.org/
 Name:      $SAGA_RPM_PACKAGE
 Version:   $SAGA_RPM_VERSION
 Release:   $SAGA_RPM_RELEASE
 License:   '$SAGA_RPM_LICENSE'
 Group:     Applications/Devel
 Source:    $SAGA_RPM_FULLNAME.tgz
-URL:       http://www.saga-project.org/release/
+URL:       http://saga-project.org/release/
 
 # temporary dir where the software should be compiled
 Buildroot: %{_tmppath}/%{name}-root
@@ -2320,7 +2398,7 @@ Autoreq:   1
 $all_deps
 
 %description
-http://www.saga-project.org/
+http://saga-project.org/
 
 
 ########################################################################
